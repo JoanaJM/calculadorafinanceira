@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Financeira</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0f2138;
+    --navy2:#16314f;
+    --accent:#1a9e6d;
+    --accent-dark:#137a54;
+    --red:#c0392b;
+    --bg:#f4f6f8;
+    --card:#ffffff;
+    --border:#e1e6eb;
+    --text:#1c2b3a;
+    --muted:#5c6b7a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(120deg,var(--navy),var(--navy2));
+    color:#fff;
+    padding:24px 20px;
+  }
+  header h1{
+    margin:0 0 4px 0;
+    font-size:1.5rem;
+    font-weight:700;
+  }
+  header p{
+    margin:0;
+    color:#c6d2dd;
+    font-size:0.92rem;
+  }
+  nav.tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    background:var(--navy2);
+    padding:0 14px;
+    overflow-x:auto;
+  }
+  nav.tabs button{
+    background:transparent;
+    border:none;
+    color:#c6d2dd;
+    padding:14px 16px;
+    font-size:0.88rem;
+    font-weight:600;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs button:hover{ color:#fff; }
+  nav.tabs button.active{
+    color:#fff;
+    border-bottom:3px solid var(--accent);
+  }
+  main{
+    max-width:1080px;
+    margin:0 auto;
+    padding:22px 16px 60px;
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .card h2{
+    margin:0 0 4px 0;
+    font-size:1.15rem;
+  }
+  .card .sub{
+    margin:0 0 16px 0;
+    color:var(--muted);
+    font-size:0.85rem;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+  }
+  label{
+    display:block;
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  input[type=number], input[type=text], select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    font-size:0.95rem;
+    background:#fbfcfd;
+  }
+  input:focus, select:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  .btn{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:6px;
+    font-weight:600;
+    font-size:0.9rem;
+    cursor:pointer;
+    margin-top:16px;
+  }
+  .btn:hover{ background:var(--accent-dark); }
+  .btn.secondary{
+    background:#fff;
+    color:var(--navy2);
+    border:1px solid var(--border);
+  }
+  .btn.secondary:hover{ background:#f0f2f4; }
+  .btn.small{ padding:6px 12px; font-size:0.8rem; margin-top:0; }
+  .results{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px dashed var(--border);
+    display:none;
+  }
+  .results.show{ display:block; }
+  .result-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+  }
+  .result-box{
+    background:#f7faf8;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+  }
+  .result-box .label{
+    font-size:0.75rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin-bottom:4px;
+    font-weight:700;
+  }
+  .result-box .value{
+    font-size:1.25rem;
+    font-weight:700;
+    color:var(--navy);
+  }
+  .result-box .value.pos{ color:var(--accent-dark); }
+  .result-box .value.neg{ color:var(--red); }
+  .note{
+    font-size:0.82rem;
+    color:var(--muted);
+    background:#f7f9fa;
+    border-left:3px solid var(--accent);
+    padding:10px 12px;
+    border-radius:4px;
+    margin-top:14px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.85rem;
+    margin-top:10px;
+  }
+  th, td{
+    padding:8px 10px;
+    text-align:right;
+    border-bottom:1px solid var(--border);
+  }
+  th:first-child, td:first-child{ text-align:left; }
+  thead th{
+    background:#f0f3f5;
+    color:var(--navy2);
+    font-weight:700;
+    position:sticky;
+    top:0;
+  }
+  .table-wrap{
+    max-height:420px;
+    overflow-y:auto;
+    border:1px solid var(--border);
+    border-radius:8px;
+    margin-top:10px;
+  }
+  .row-flex{
+    display:flex;
+    gap:10px;
+    align-items:flex-end;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .row-flex > div{ flex:1; min-width:120px; }
+  .flow-row{
+    display:grid;
+    grid-template-columns:70px 1fr 40px;
+    gap:8px;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .flow-row span{ font-size:0.85rem; color:var(--muted); }
+  .remove-btn{
+    background:none;
+    border:none;
+    color:var(--red);
+    font-size:1.1rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  .chart-wrap{
+    margin-top:18px;
+    height:280px;
+    position:relative;
+  }
+  .tabs-inner{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .tabs-inner button{
+    background:#f0f3f5;
+    border:1px solid var(--border);
+    padding:7px 14px;
+    border-radius:6px;
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--navy2);
+  }
+  .tabs-inner button.active{
+    background:var(--navy2);
+    color:#fff;
+    border-color:var(--navy2);
+  }
+  .subpanel{ display:none; }
+  .subpanel.active{ display:block; }
+  .radio-group{
+    display:flex;
+    gap:16px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .radio-group label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:500;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .radio-group input{ width:auto; }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.78rem;
+    padding:20px;
+  }
+  @media (max-width:600px){
+    header h1{ font-size:1.2rem; }
+    table{ font-size:0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Calculadora Financeira</h1>
+  <p>Juros simples e compostos · inflação e efeito Fisher · viabilidade de investimentos (VPL/TIR) · amortização Price e SAC</p>
+</header>
+
+<nav class="tabs" id="mainTabs">
+  <button class="tab-btn active" data-tab="simples">Juros Simples</button>
+  <button class="tab-btn" data-tab="compostos">Juros Compostos</button>
+  <button class="tab-btn" data-tab="inflacao">Inflação &amp; Fisher</button>
+  <button class="tab-btn" data-tab="viabilidade">Viabilidade (VPL/TIR)</button>
+  <button class="tab-btn" data-tab="amortizacao">Amortização (Price/SAC)</button>
+</nav>
+
+<main>
+
+  <!-- ===================== JUROS SIMPLES ===================== -->
+  <section class="panel active" id="panel-simples">
+    <div class="card">
+      <h2>Juros Simples</h2>
+      <p class="sub">J = C · i · n &nbsp;|&nbsp; M = C + J</p>
+      <div class="grid">
+        <div>
+          <label>Capital inicial (R$)</label>
+          <input type="number" id="js_C" value="1000" step="0.01">
+        </div>
+        <div>
+          <label>Taxa de juros por período (%)</label>
+          <input type="number" id="js_i" value="2" step="0.01">
+        </div>
+        <div>
+          <label>Número de períodos</label>
+          <input type="number" id="js_n" value="6" step="1">
+        </div>
+      </div>
+      <button class="btn" onclick="calcJurosSimples()">Calcular</button>
+
+      <div class="results" id="js_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label">Juros (J)</div>
+            <div class="value" id="js_J">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Montante (M)</div>
+            <div class="value pos" id="js_M">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== JUROS COMPOSTOS ===================== -->
+  <section class="panel" id="panel-compostos">
+    <div class="card">
+      <h2>Juros Compostos</h2>
+      <p class="sub">M = C · (1 + i)ⁿ &nbsp;|&nbsp; J = M − C</p>
+      <div class="grid">
+        <div>
+          <label>Capital inicial (R$)</label>
+          <input type="number" id="jc_C" value="1000" step="0.01">
+        </div>
+        <div>
+          <label>Taxa de juros por período (%)</label>
+          <input type="number" id="jc_i" value="2" step="0.01">
+        </div>
+        <div>
+          <label>Número de períodos</label>
+          <input type="number" id="jc_n" value="6" step="1">
+        </div>
+      </div>
+      <button class="btn" onclick="calcJurosCompostos()">Calcular</button>
+
+      <div class="results" id="jc_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label">Juros (J)</div>
+            <div class="value" id="jc_J">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Montante (M)</div>
+            <div class="value pos" id="jc_M">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Conversor de Taxas Equivalentes</h2>
+      <p class="sub">i₂ = (1 + i₁)^(N₂/N₁) − 1 &nbsp;(convenção: ano = 360 dias)</p>
+      <div class="grid">
+        <div>
+          <label>Taxa informada (%)</label>
+          <input type="number" id="te_i" value="12" step="0.01">
+        </div>
+        <div>
+          <label>Período da taxa informada</label>
+          <select id="te_de">
+            <option value="360">Ao dia</option>
+            <option value="12">Ao mês</option>
+            <option value="4">Ao trimestre</option>
+            <option value="2">Ao semestre</option>
+            <option value="1" selected>Ao ano</option>
+          </select>
+        </div>
+        <div>
+          <label>Converter para</label>
+          <select id="te_para">
+            <option value="360">Ao dia</option>
+            <option value="12" selected>Ao mês</option>
+            <option value="4">Ao trimestre</option>
+            <option value="2">Ao semestre</option>
+            <option value="1">Ao ano</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" onclick="calcTaxaEquivalente()">Converter</button>
+      <div class="results" id="te_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label">Taxa equivalente</div>
+            <div class="value pos" id="te_out">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INFLAÇÃO / FISHER ===================== -->
+  <section class="panel" id="panel-inflacao">
+    <div class="card">
+      <h2>Inflação, Taxa Real e Efeito Fisher</h2>
+      <p class="sub">(1 + i<sub>nominal</sub>) = (1 + i<sub>real</sub>) · (1 + inflação)</p>
+
+      <div class="radio-group">
+        <label><input type="radio" name="fisher_mode" value="real" checked> Calcular taxa real</label>
+        <label><input type="radio" name="fisher_mode" value="nominal"> Calcular taxa nominal</label>
+        <label><input type="radio" name="fisher_mode" value="inflacao"> Calcular inflação implícita</label>
+      </div>
+
+      <div class="grid">
+        <div id="f_field_nominal">
+          <label>Taxa nominal (%)</label>
+          <input type="number" id="f_nominal" value="10" step="0.01">
+        </div>
+        <div id="f_field_real" style="display:none;">
+          <label>Taxa real (%)</label>
+          <input type="number" id="f_real" value="5" step="0.01">
+        </div>
+        <div id="f_field_inflacao">
+          <label>Inflação do período (%)</label>
+          <input type="number" id="f_inflacao" value="4" step="0.01">
+        </div>
+      </div>
+      <button class="btn" onclick="calcFisher()">Calcular</button>
+
+      <div class="results" id="f_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label" id="f_label">Resultado</div>
+            <div class="value pos" id="f_out">–</div>
+          </div>
+        </div>
+        <div class="note" id="f_note"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VIABILIDADE ===================== -->
+  <section class="panel" id="panel-viabilidade">
+
+    <div class="card">
+      <h2>Custo de Capital (WACC) — sugestão de TMA</h2>
+      <p class="sub">WACC = (E/V)·Ke + (D/V)·Kd·(1 − IR)</p>
+      <div class="grid">
+        <div>
+          <label>Capital próprio – Equity (R$)</label>
+          <input type="number" id="wacc_E" value="600000" step="0.01">
+        </div>
+        <div>
+          <label>Capital de terceiros – Dívida (R$)</label>
+          <input type="number" id="wacc_D" value="400000" step="0.01">
+        </div>
+        <div>
+          <label>Custo do capital próprio – Ke (%)</label>
+          <input type="number" id="wacc_Ke" value="15" step="0.01">
+        </div>
+        <div>
+          <label>Custo da dívida – Kd (%)</label>
+          <input type="number" id="wacc_Kd" value="8" step="0.01">
+        </div>
+        <div>
+          <label>Alíquota de IR (%)</label>
+          <input type="number" id="wacc_tax" value="34" step="0.01">
+        </div>
+      </div>
+      <button class="btn" onclick="calcWacc()">Calcular WACC</button>
+      <button class="btn secondary" onclick="useWaccAsTma()">Usar como TMA abaixo →</button>
+
+      <div class="results" id="wacc_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label">WACC / Custo de Capital</div>
+            <div class="value pos" id="wacc_out">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Fluxo de Caixa, VPL e TIR</h2>
+      <p class="sub">VPL = Σ FCₜ / (1 + TMA)ᵗ &nbsp;|&nbsp; TIR: taxa que zera o VPL</p>
+
+      <div class="grid" style="max-width:260px;">
+        <div>
+          <label>Taxa Mínima de Atratividade – TMA (%)</label>
+          <input type="number" id="v_tma" value="10" step="0.01">
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label>Fluxo de caixa por período (período 0 = investimento inicial, normalmente negativo)</label>
+        <div id="flow_rows"></div>
+        <button class="btn secondary small" onclick="addFlowRow()">+ Adicionar período</button>
+      </div>
+
+      <button class="btn" onclick="calcViabilidade()">Calcular VPL / TIR</button>
+
+      <div class="results" id="v_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label">VPL</div>
+            <div class="value" id="v_vpl">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">TIR</div>
+            <div class="value" id="v_tir">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Payback simples</div>
+            <div class="value" id="v_payback">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Decisão (VPL vs TMA)</div>
+            <div class="value" id="v_decisao">–</div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:22px; font-size:1rem;">Análise de Sensibilidade</h2>
+        <p class="sub">Impacto de variações na TMA e no fluxo de caixa sobre o VPL</p>
+        <div class="table-wrap" style="max-height:260px;">
+          <table>
+            <thead><tr><th>Cenário</th><th>TMA −2pp</th><th>TMA −1pp</th><th>Base</th><th>TMA +1pp</th><th>TMA +2pp</th></tr></thead>
+            <tbody><tr id="v_sens_tma"></tr></tbody>
+          </table>
+          <table>
+            <thead><tr><th>Cenário</th><th>Fluxo −10%</th><th>Fluxo −5%</th><th>Base</th><th>Fluxo +5%</th><th>Fluxo +10%</th></tr></thead>
+            <tbody><tr id="v_sens_fluxo"></tr></tbody>
+          </table>
+        </div>
+        <div class="chart-wrap"><canvas id="v_chart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== AMORTIZAÇÃO ===================== -->
+  <section class="panel" id="panel-amortizacao">
+    <div class="card">
+      <h2>Amortização — Tabela Price (Francês) e Tabela SAC</h2>
+      <p class="sub">Price: parcelas fixas &nbsp;|&nbsp; SAC: amortização constante, parcelas decrescentes</p>
+      <div class="grid">
+        <div>
+          <label>Valor financiado (R$)</label>
+          <input type="number" id="am_PV" value="100000" step="0.01">
+        </div>
+        <div>
+          <label>Taxa de juros por período (%)</label>
+          <input type="number" id="am_i" value="1.5" step="0.01">
+        </div>
+        <div>
+          <label>Número de parcelas</label>
+          <input type="number" id="am_n" value="24" step="1">
+        </div>
+      </div>
+      <button class="btn" onclick="calcAmortizacao()">Calcular</button>
+
+      <div class="results" id="am_results">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="label">Parcela fixa (Price)</div>
+            <div class="value pos" id="am_pmt">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">1ª parcela (SAC)</div>
+            <div class="value pos" id="am_sac_first">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Total de juros — Price</div>
+            <div class="value" id="am_price_juros">–</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Total de juros — SAC</div>
+            <div class="value" id="am_sac_juros">–</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap"><canvas id="am_chart"></canvas></div>
+
+        <div class="tabs-inner" style="margin-top:18px;">
+          <button class="inner-tab-btn active" data-inner="price">Tabela Price</button>
+          <button class="inner-tab-btn" data-inner="sac">Tabela SAC</button>
+        </div>
+
+        <div class="subpanel active" id="inner-price">
+          <button class="btn secondary small" onclick="downloadCsv('price')">Baixar CSV</button>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Período</th><th>Parcela</th><th>Juros</th><th>Amortização</th><th>Saldo devedor</th></tr></thead>
+              <tbody id="am_price_body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="subpanel" id="inner-sac">
+          <button class="btn secondary small" onclick="downloadCsv('sac')">Baixar CSV</button>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Período</th><th>Parcela</th><th>Juros</th><th>Amortização</th><th>Saldo devedor</th></tr></thead>
+              <tbody id="am_sac_body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Calculadora educacional para fins de apoio à decisão — não substitui orientação financeira profissional.</footer>
+
+<script>
+/* ========================================================================
+   MOTOR DE CÁLCULO — funções puras (validadas com casos de referência)
+   ======================================================================== */
+
+function jurosSimples(C, i, n) {
+  const J = C * i * n;
+  const M = C + J;
+  return { J, M };
+}
+
+function jurosCompostos(C, i, n) {
+  const M = C * Math.pow(1 + i, n);
+  const J = M - C;
+  return { J, M };
+}
+
+function taxaEquivalente(iOrigem, fator) {
+  return Math.pow(1 + iOrigem, fator) - 1;
+}
+
+function taxaReal(iNominal, inflacao) {
+  return (1 + iNominal) / (1 + inflacao) - 1;
+}
+function taxaNominal(iReal, inflacao) {
+  return (1 + iReal) * (1 + inflacao) - 1;
+}
+function inflacaoImplicita(iNominal, iReal) {
+  return (1 + iNominal) / (1 + iReal) - 1;
+}
+
+function vpl(tma, fluxos) {
+  let total = 0;
+  for (let t = 0; t < fluxos.length; t++) {
+    total += fluxos[t] / Math.pow(1 + tma, t);
+  }
+  return total;
+}
+
+function tir(fluxos) {
+  let low = -0.9999, high = 10;
+  const f = (rate) => vpl(rate, fluxos);
+  let fLow = f(low), fHigh = f(high);
+  if (fLow * fHigh > 0) return null;
+  let mid, fMid;
+  for (let iter = 0; iter < 200; iter++) {
+    mid = (low + high) / 2;
+    fMid = f(mid);
+    if (Math.abs(fMid) < 1e-9) return mid;
+    if (fLow * fMid < 0) { high = mid; fHigh = fMid; } else { low = mid; fLow = fMid; }
+  }
+  return (low + high) / 2;
+}
+
+function wacc(E, D, Ke, Kd, taxRate) {
+  const V = E + D;
+  return (E / V) * Ke + (D / V) * Kd * (1 - taxRate);
+}
+
+function sensibilidadeTMA(fluxos, tmaBase, variacoes) {
+  return variacoes.map(d => ({ delta: d, vpl: vpl(tmaBase + d, fluxos) }));
+}
+
+function sensibilidadeFluxo(fluxos, tma, variacoesPercentuais) {
+  return variacoesPercentuais.map(p => {
+    const fluxosAjustados = fluxos.map((f, idx) => idx === 0 ? f : f * (1 + p));
+    return { variacao: p, vpl: vpl(tma, fluxosAjustados) };
+  });
+}
+
+function pmtPrice(PV, i, n) {
+  if (i === 0) return PV / n;
+  return PV * i / (1 - Math.pow(1 + i, -n));
+}
+
+function tabelaPrice(PV, i, n) {
+  const pmt = pmtPrice(PV, i, n);
+  let saldo = PV;
+  const tabela = [];
+  for (let t = 1; t <= n; t++) {
+    const juros = saldo * i;
+    let amortizacao = pmt - juros;
+    saldo = saldo - amortizacao;
+    if (t === n || Math.abs(saldo) < 1e-6) saldo = 0;
+    tabela.push({ periodo: t, parcela: pmt, juros, amortizacao, saldoDevedor: saldo });
+  }
+  return { pmt, tabela };
+}
+
+function tabelaSAC(PV, i, n) {
+  const amortizacaoConstante = PV / n;
+  let saldo = PV;
+  const tabela = [];
+  for (let t = 1; t <= n; t++) {
+    const juros = saldo * i;
+    const parcela = amortizacaoConstante + juros;
+    saldo = saldo - amortizacaoConstante;
+    if (t === n || Math.abs(saldo) < 1e-6) saldo = 0;
+    tabela.push({ periodo: t, parcela, juros, amortizacao: amortizacaoConstante, saldoDevedor: saldo });
+  }
+  return { tabela };
+}
+
+/* ========================================================================
+   FORMATAÇÃO
+   ======================================================================== */
+const fmtBRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtPct = (v) => (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + '%';
+const fmtNum = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* ========================================================================
+   NAVEGAÇÃO POR ABAS
+   ======================================================================== */
+document.querySelectorAll('#mainTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#mainTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('main .panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+document.querySelectorAll('.inner-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.inner-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('inner-' + btn.dataset.inner).classList.add('active');
+  });
+});
+
+/* ========================================================================
+   1) JUROS SIMPLES
+   ======================================================================== */
+function calcJurosSimples() {
+  const C = parseFloat(document.getElementById('js_C').value) || 0;
+  const i = (parseFloat(document.getElementById('js_i').value) || 0) / 100;
+  const n = parseFloat(document.getElementById('js_n').value) || 0;
+  const { J, M } = jurosSimples(C, i, n);
+  document.getElementById('js_J').textContent = fmtBRL(J);
+  document.getElementById('js_M').textContent = fmtBRL(M);
+  document.getElementById('js_results').classList.add('show');
+}
+
+/* ========================================================================
+   2) JUROS COMPOSTOS
+   ======================================================================== */
+function calcJurosCompostos() {
+  const C = parseFloat(document.getElementById('jc_C').value) || 0;
+  const i = (parseFloat(document.getElementById('jc_i').value) || 0) / 100;
+  const n = parseFloat(document.getElementById('jc_n').value) || 0;
+  const { J, M } = jurosCompostos(C, i, n);
+  document.getElementById('jc_J').textContent = fmtBRL(J);
+  document.getElementById('jc_M').textContent = fmtBRL(M);
+  document.getElementById('jc_results').classList.add('show');
+}
+
+function calcTaxaEquivalente() {
+  const i = (parseFloat(document.getElementById('te_i').value) || 0) / 100;
+  const nDe = parseFloat(document.getElementById('te_de').value);
+  const nPara = parseFloat(document.getElementById('te_para').value);
+  const fator = nPara / nDe;
+  const out = taxaEquivalente(i, fator);
+  document.getElementById('te_out').textContent = fmtPct(out);
+  document.getElementById('te_results').classList.add('show');
+}
+
+/* ========================================================================
+   3) INFLAÇÃO / FISHER
+   ======================================================================== */
+document.querySelectorAll('input[name=fisher_mode]').forEach(r => {
+  r.addEventListener('change', updateFisherFields);
+});
+function updateFisherFields() {
+  const mode = document.querySelector('input[name=fisher_mode]:checked').value;
+  document.getElementById('f_field_nominal').style.display = mode === 'nominal' ? 'none' : 'block';
+  document.getElementById('f_field_real').style.display = mode === 'real' ? 'none' : 'block';
+  document.getElementById('f_field_inflacao').style.display = mode === 'inflacao' ? 'none' : 'block';
+}
+function calcFisher() {
+  const mode = document.querySelector('input[name=fisher_mode]:checked').value;
+  const nominal = (parseFloat(document.getElementById('f_nominal').value) || 0) / 100;
+  const real = (parseFloat(document.getElementById('f_real').value) || 0) / 100;
+  const inflacao = (parseFloat(document.getElementById('f_inflacao').value) || 0) / 100;
+  let out, label, note;
+  if (mode === 'real') {
+    out = taxaReal(nominal, inflacao);
+    label = 'Taxa real';
+    note = `(1 + ${fmtPct(nominal)}) / (1 + ${fmtPct(inflacao)}) − 1 = ${fmtPct(out)}`;
+  } else if (mode === 'nominal') {
+    out = taxaNominal(real, inflacao);
+    label = 'Taxa nominal';
+    note = `(1 + ${fmtPct(real)}) × (1 + ${fmtPct(inflacao)}) − 1 = ${fmtPct(out)}`;
+  } else {
+    out = inflacaoImplicita(nominal, real);
+    label = 'Inflação implícita';
+    note = `(1 + ${fmtPct(nominal)}) / (1 + ${fmtPct(real)}) − 1 = ${fmtPct(out)}`;
+  }
+  document.getElementById('f_label').textContent = label;
+  document.getElementById('f_out').textContent = fmtPct(out);
+  document.getElementById('f_note').textContent = note;
+  document.getElementById('f_results').classList.add('show');
+}
+updateFisherFields();
+
+/* ========================================================================
+   4) VIABILIDADE — WACC, VPL, TIR, SENSIBILIDADE
+   ======================================================================== */
+function calcWacc() {
+  const E = parseFloat(document.getElementById('wacc_E').value) || 0;
+  const D = parseFloat(document.getElementById('wacc_D').value) || 0;
+  const Ke = (parseFloat(document.getElementById('wacc_Ke').value) || 0) / 100;
+  const Kd = (parseFloat(document.getElementById('wacc_Kd').value) || 0) / 100;
+  const tax = (parseFloat(document.getElementById('wacc_tax').value) || 0) / 100;
+  const out = wacc(E, D, Ke, Kd, tax);
+  document.getElementById('wacc_out').textContent = fmtPct(out);
+  document.getElementById('wacc_results').classList.add('show');
+  window._lastWacc = out;
+}
+function useWaccAsTma() {
+  if (window._lastWacc === undefined) calcWacc();
+  document.getElementById('v_tma').value = (window._lastWacc * 100).toFixed(2);
+}
+
+let flowCount = 0;
+function addFlowRow(periodo, valor) {
+  const wrap = document.getElementById('flow_rows');
+  const idx = flowCount++;
+  const row = document.createElement('div');
+  row.className = 'flow-row';
+  row.dataset.idx = idx;
+  row.innerHTML = `
+    <span>t = ${idx}</span>
+    <input type="number" step="0.01" class="flow-value" value="${valor !== undefined ? valor : ''}" placeholder="Valor do fluxo (R$)">
+    <button class="remove-btn" onclick="removeFlowRow(this)" title="Remover">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+function removeFlowRow(btn) {
+  btn.closest('.flow-row').remove();
+  renumberFlowRows();
+}
+function renumberFlowRows() {
+  const rows = document.querySelectorAll('#flow_rows .flow-row');
+  rows.forEach((row, idx) => {
+    row.dataset.idx = idx;
+    row.querySelector('span').textContent = 't = ' + idx;
+  });
+  flowCount = rows.length;
+}
+// linhas iniciais de exemplo
+addFlowRow(0, -1000);
+addFlowRow(1, 300);
+addFlowRow(2, 300);
+addFlowRow(3, 300);
+addFlowRow(4, 300);
+addFlowRow(5, 300);
+
+let vChart = null;
+function calcViabilidade() {
+  const tma = (parseFloat(document.getElementById('v_tma').value) || 0) / 100;
+  const fluxos = Array.from(document.querySelectorAll('#flow_rows .flow-value')).map(inp => parseFloat(inp.value) || 0);
+
+  const vplValor = vpl(tma, fluxos);
+  const tirValor = tir(fluxos);
+
+  // payback simples (não descontado)
+  let acumulado = fluxos[0];
+  let payback = null;
+  for (let t = 1; t < fluxos.length; t++) {
+    const anterior = acumulado;
+    acumulado += fluxos[t];
+    if (acumulado >= 0 && payback === null) {
+      const fracao = fluxos[t] !== 0 ? (-anterior) / fluxos[t] : 0;
+      payback = (t - 1) + fracao;
+    }
+  }
+
+  document.getElementById('v_vpl').textContent = fmtBRL(vplValor);
+  document.getElementById('v_vpl').className = 'value ' + (vplValor >= 0 ? 'pos' : 'neg');
+  document.getElementById('v_tir').textContent = tirValor === null ? 'Não encontrada' : fmtPct(tirValor);
+  document.getElementById('v_payback').textContent = payback === null ? 'Não recuperado' : payback.toFixed(2) + ' períodos';
+  document.getElementById('v_decisao').textContent = vplValor >= 0 ? 'Viável (aceitar)' : 'Inviável (rejeitar)';
+  document.getElementById('v_decisao').className = 'value ' + (vplValor >= 0 ? 'pos' : 'neg');
+
+  // sensibilidade TMA
+  const sensTma = sensibilidadeTMA(fluxos, tma, [-0.02, -0.01, 0, 0.01, 0.02]);
+  document.getElementById('v_sens_tma').innerHTML =
+    '<td>VPL</td>' + sensTma.map(s => `<td>${fmtBRL(s.vpl)}</td>`).join('');
+
+  // sensibilidade fluxo
+  const sensFluxo = sensibilidadeFluxo(fluxos, tma, [-0.10, -0.05, 0, 0.05, 0.10]);
+  document.getElementById('v_sens_fluxo').innerHTML =
+    '<td>VPL</td>' + sensFluxo.map(s => `<td>${fmtBRL(s.vpl)}</td>`).join('');
+
+  // gráfico VPL x TMA
+  const tmaCurve = [];
+  const range = [];
+  for (let d = -0.10; d <= 0.30; d += 0.01) {
+    range.push((d * 100).toFixed(0) + '%');
+    tmaCurve.push(vpl(d, fluxos));
+  }
+  const ctx = document.getElementById('v_chart').getContext('2d');
+  if (vChart) vChart.destroy();
+  if (window.Chart) {
+    vChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: range,
+        datasets: [{
+          label: 'VPL em função da taxa de desconto',
+          data: tmaCurve,
+          borderColor: '#1a9e6d',
+          backgroundColor: 'rgba(26,158,109,0.12)',
+          fill: true,
+          tension: 0.25,
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true } },
+        scales: {
+          y: { title: { display: true, text: 'VPL (R$)' } },
+          x: { title: { display: true, text: 'Taxa de desconto' } }
+        }
+      }
+    });
+  }
+
+  document.getElementById('v_results').classList.add('show');
+}
+
+/* ========================================================================
+   5) AMORTIZAÇÃO — PRICE E SAC
+   ======================================================================== */
+let amChart = null;
+let lastPriceTable = [], lastSacTable = [];
+
+function calcAmortizacao() {
+  const PV = parseFloat(document.getElementById('am_PV').value) || 0;
+  const i = (parseFloat(document.getElementById('am_i').value) || 0) / 100;
+  const n = parseInt(document.getElementById('am_n').value) || 0;
+
+  const price = tabelaPrice(PV, i, n);
+  const sac = tabelaSAC(PV, i, n);
+  lastPriceTable = price.tabela;
+  lastSacTable = sac.tabela;
+
+  const totalJurosPrice = price.tabela.reduce((s, r) => s + r.juros, 0);
+  const totalJurosSac = sac.tabela.reduce((s, r) => s + r.juros, 0);
+
+  document.getElementById('am_pmt').textContent = fmtBRL(price.pmt);
+  document.getElementById('am_sac_first').textContent = sac.tabela.length ? fmtBRL(sac.tabela[0].parcela) : '–';
+  document.getElementById('am_price_juros').textContent = fmtBRL(totalJurosPrice);
+  document.getElementById('am_sac_juros').textContent = fmtBRL(totalJurosSac);
+
+  document.getElementById('am_price_body').innerHTML = price.tabela.map(r =>
+    `<tr><td>${r.periodo}</td><td>${fmtBRL(r.parcela)}</td><td>${fmtBRL(r.juros)}</td><td>${fmtBRL(r.amortizacao)}</td><td>${fmtBRL(r.saldoDevedor)}</td></tr>`
+  ).join('');
+
+  document.getElementById('am_sac_body').innerHTML = sac.tabela.map(r =>
+    `<tr><td>${r.periodo}</td><td>${fmtBRL(r.parcela)}</td><td>${fmtBRL(r.juros)}</td><td>${fmtBRL(r.amortizacao)}</td><td>${fmtBRL(r.saldoDevedor)}</td></tr>`
+  ).join('');
+
+  const ctx = document.getElementById('am_chart').getContext('2d');
+  if (amChart) amChart.destroy();
+  if (window.Chart) {
+    amChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: price.tabela.map(r => r.periodo),
+        datasets: [
+          {
+            label: 'Saldo devedor — Price',
+            data: price.tabela.map(r => r.saldoDevedor),
+            borderColor: '#1a9e6d',
+            backgroundColor: 'transparent',
+            tension: 0.15,
+            pointRadius: 0,
+          },
+          {
+            label: 'Saldo devedor — SAC',
+            data: sac.tabela.map(r => r.saldoDevedor),
+            borderColor: '#16314f',
+            backgroundColor: 'transparent',
+            tension: 0.15,
+            pointRadius: 0,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true } },
+        scales: {
+          y: { title: { display: true, text: 'Saldo devedor (R$)' } },
+          x: { title: { display: true, text: 'Período' } }
+        }
+      }
+    });
+  }
+
+  document.getElementById('am_results').classList.add('show');
+}
+
+function downloadCsv(which) {
+  const data = which === 'price' ? lastPriceTable : lastSacTable;
+  if (!data.length) return;
+  let csv = 'Periodo;Parcela;Juros;Amortizacao;SaldoDevedor\n';
+  data.forEach(r => {
+    csv += [r.periodo, r.parcela.toFixed(2), r.juros.toFixed(2), r.amortizacao.toFixed(2), r.saldoDevedor.toFixed(2)].join(';') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tabela_' + which + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* inicializa cálculos padrão para já mostrar resultados de exemplo */
+calcJurosSimples();
+calcJurosCompostos();
+calcTaxaEquivalente();
+calcFisher();
+calcWacc();
+</script>
+</body>
+</html>
